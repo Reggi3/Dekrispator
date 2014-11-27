@@ -127,11 +127,18 @@ void MagicPatch(uint8_t val) /* random sound parameters */
  * *****************************************************************************/
 void MIDI_Decode(uint8_t * outBuf)
 {
-
+	// use chan to reference the midi channel and filter messages, internally starts at 0, to the end user channel 1!!
+	uint8_t chan = outBuf[1] & 0x0F;
 	uint8_t val = 0;
 
 	if (outBuf[1] != 0x00) start_LED_On(LED_Blue, 8);
-
+	// channel 2 for your extra functions and high resolution encoder support
+	if (chan == 1){
+		; // do something cool here
+	}
+	
+	// channel 1, Stock 7bit midi control goes here, use this for potentiometers
+	if (chan == 0){
 	/* If the midi message is a Control Change... */
 	if ((outBuf[1] & 0xF0) == 0xB0)
 	{
@@ -147,15 +154,15 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 67 :	DemoMode_toggle(val);		break;
 		//case 76 :	DemoMode_freeze(val);		break;
 
-		case 39 :	MagicPatch(val);			break;	// random settings except effects
-		case 38 :	MagicFX(val);				break;	// random settings for effects
-		case 82 :	MagicPatch(val);			break;	//
-		case 81 :	MagicFX(val);				break;	//
+		case 39 :	MagicPatch(val);		break;	// random settings except effects
+		case 38 :	MagicFX(val);			break;	// random settings for effects
+		case 82 :	MagicPatch(val);		break;	//
+		case 81 :	MagicFX(val);			break;	//
 
-		case 5 :	seq_scale_set(val);			break; 	// scale
-		case 6 :	Sound_set(val);				break;	// waveform
-		case 76 :	RandSound1(val);			break;
-		case 77 :	RandSound2(val);			break;
+		case 5 :	seq_scale_set(val);		break; 	// scale
+		case 6 :	Sound_set(val);			break;	// waveform
+		case 76 :	RandSound1(val);		break;
+		case 77 :	RandSound2(val);		break;
 
 		case 8 :	Filter1Freq_set(val);		break;	//
 		case 9 :	Filter1Res_set(val);		break;	//
@@ -165,10 +172,10 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 55 :	Filter1Drive_set(val);		break;	//
 		case 56 :	Filter1Type_set(val);		break;	//
 
-		case 23 :	Delay_switch(val);			break;	// Delay ON/OFF
+		case 23 :	Delay_switch(val);		break;	// Delay ON/OFF
 		case 14 :	Delay_time_set(val);		break;	// Delay time
 		case 15 :	DelayFeedback_set(val);		break;	// Delay feedback
-		case 2 :	DelayWet_set(val);			break;	// Delay wet signal amplitude
+		case 2 :	DelayWet_set(val);		break;	// Delay wet signal amplitude
 		case 40 :	Delay_time_dec(val);		break;
 		case 41 :	Delay_time_inc(val);		break;
 
@@ -178,8 +185,8 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 27 :	Filter_Random_switch(val);	break;	// Filter ON/OFF
 		case 63 :	SynthOut_amp_set(val);		break;	// Distorsion
 
-		case 28 :	Chorus_switch(val);			break;	// Chorus ON/OFF
-		case 37 :	Chorus_reset(val);			break;
+		case 28 :	Chorus_switch(val);		break;	// Chorus ON/OFF
+		case 37 :	Chorus_reset(val);		break;
 		case 18 :	ChorusRate_set(val);		break;	// Chorus rate
 		case 22 :	ChorusSecondRate_set(val);	break;	// Chorus relative rate for LFO right
 		case 19 :	ChorusDelay_set(val);		break;	// Chorus delay
@@ -188,7 +195,7 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 29 :	ChorusMode_switch(val);		break;	// Chorus mode
 		case 30 :	ChorusFDBsign_switch(val);	break;	// Chorus fdb sign
 
-		case 24 :	Phaser_switch(val);			break;
+		case 24 :	Phaser_switch(val);		break;
 		case 102 :	Phaser_Rate_set(val);		break;
 		case 103 :	Phaser_Feedback_set(val);	break;
 		case 89 :	Phaser_Wet_set(val);		break;
@@ -198,16 +205,16 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 25 :	seq_switchMute(val);		break;	// toggle muted notes
 
 		case 33 :	seq_transp(-2, val);		break;	// transpose 1 tone down
-		case 34 :	seq_transp(2, val);			break;	// transpose 1 tone up
+		case 34 :	seq_transp(2, val);		break;	// transpose 1 tone up
 		case 35 :	seq_transp(-7, val);		break;	//
 		case 36 :	seq_transp( 7, val);		break;	//
 
 		case 42 :	seq_gateTime_set(val);		break;	//
 
-		case 43 :	AttTime_set(val);			break;	//
-		case 50 :	DecTime_set(val);			break;	//
-		case 51 :	SustLevel_set(val);			break;	//
-		case 52 :	RelTime_set(val);			break;	//
+		case 43 :	AttTime_set(val);		break;	//
+		case 50 :	DecTime_set(val);		break;	//
+		case 51 :	SustLevel_set(val);		break;	//
+		case 52 :	RelTime_set(val);		break;	//
 
 		case 65 :	Filt1LFO_amp_set(val);		break;	//
 		case 66 :	Filt1LFO_freq_set(val);		break;	//
@@ -250,5 +257,6 @@ void MIDI_Decode(uint8_t * outBuf)
 		case 62 : 	Drifter_centralFreq_set(val);	break;
 
 		}
+	}
 	}
 }
