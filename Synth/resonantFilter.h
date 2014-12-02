@@ -108,6 +108,12 @@ void 	SVF_init(void);
 
 void 	Filter1Freq_set(uint8_t val);
 
+void    Filter1Freq_incdec(uint8_t val);
+
+void    Filter2Freq_incdec(uint8_t val);
+/*
+void    Filter3Freq_incdec(uint8_t val);
+*/
 void 	Filter1Res_set(uint8_t val);
 
 void	Filter1Drive_set(uint8_t val);
@@ -121,5 +127,13 @@ void 	Filter2Res_set(uint8_t val);
 void	Filter2Drive_set(uint8_t val);
 
 void 	Filter2Type_set(uint8_t val);
+/*
+void 	Filter3Freq_set(uint8_t val);
 
+void 	Filter3Res_set(uint8_t val);
+
+void	Filter3Drive_set(uint8_t val);
+
+void 	Filter3Type_set(uint8_t val);
+*/
 #endif /* RESONANTFILTER_H_ */

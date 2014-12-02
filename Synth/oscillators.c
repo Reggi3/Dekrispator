@@ -42,6 +42,7 @@ Oscillator_t 		vibr_lfo _CCM_;
 
 Oscillator_t 		filt_lfo _CCM_;
 Oscillator_t 		filt2_lfo _CCM_;
+Oscillator_t 		filt3_lfo _CCM_;
 
 Oscillator_t 		amp_lfo _CCM_;
 
@@ -49,22 +50,36 @@ float_t			a[PARTIALS_NUMBER + 1] _CCM_ ;
 float_t			ph[PARTIALS_NUMBER + 1] _CCM_ ;
 
 float_t			centralFreq = 3000;
-
+float_t                 Po = 1.0f/360.0f;
 /*===============================================================================================================*/
 
 void
-osc_init(Oscillator_t * op, float_t amp, float_t freq)
+osc_init(Oscillator_t * op, float_t amp, float_t freq, bool trigger)
 {
 	op->amp = amp;
 	op->last_amp = amp;
 	op->freq = freq;
+	op->offset = 0;
 	op->phase = 0;
+    op->retrigger = trigger;
 	op->out = 0;
 	op->modInd = 0;
 	op->mul = 1;
 }
 /*-------------------------------------------------------*/
-
+// Reggie added to allow us to retrigger the filter lfos with each note
+// Will also add facility to change the starting phase position if I'm looking
+// at the right part of the code
+void
+osc_phase_reset(Oscillator_t * op){
+  if (op->retrigger == true){
+  	op->phase = op->offset;
+  }
+  	else {
+          op->phase = 0;
+   }
+}
+/*-------------------------------------------------------*/
 void
 OpSetFreq(Oscillator_t * op, float_t f)
 {
@@ -184,6 +199,47 @@ float_t OpSampleCompute7bis(Oscillator_t * op) // basic wave table positive sine
 
 	return op->out;
 }
+/*-------------------------------------------------------*/
+// Reggie Added
+// Phase shifter for filter LFO re-trigger mode
+// Should be useable on all of the oscillators but probably not much use
+// unless that oscillator is an LFO?
+// however, it should be possible to apply different waveforms to the filter LFO
+// which could be quite interesting and give the filters an extra dimension
+// perhaps seeing what higher lfo rates will produce too?
+// we should probably use an offset member in the oscillator struct
+void lfo_phase_shift(Oscillator_t * op, uint8_t val){
+
+        // use op->offset and use that in the re-trigger part of the code
+        while (op->phase < 0) // keep phase in [0, 2pi]
+		op->phase += _2PI;
+	while (op->phase >= _2PI)
+		op->phase -= _2PI;
+        if (val <= 0x0F){
+        op->phase += _2PI * Po * op->freq; // increment phase
+        } else if (val >= 0x70){
+        op->phase -= _2PI * Po * op->freq; // increment phase
+        }
+        }
+// Reggie added, not sure we need 2 functions for this, phase_shift is for free running lfo mode (default)
+// lfo_phase_offset is for retrigger mode.
+// if we put a retrigger flag in somewhere then we can use a single incoming midi message
+// to control both functions.
+// To change the resolution of the control, edit the Po define
+// currently set to just under 1/2 a degree per step
+void lfo_phase_offset(Oscillator_t * op, uint8_t val){
+        // use op->offset and use that in the re-trigger part of the code
+        while (op->offset < 0) // keep phase in [0, 2pi]
+		op->offset += _2PI;
+	while (op->offset >= _2PI)
+		op->offset -= _2PI;
+        if (val <= 0x0F){
+
+        op->offset += _2PI * Po * op->freq; // increment phase
+        } else if (val >= 0x70){
+        op->offset -= _2PI * Po * op->freq; // increment phase
+        }
+        }
 /*-------------------------------------------------------*/
 float_t OpSampleCompute1(Oscillator_t * op) // basic sawtooth^2
 {

@@ -63,6 +63,13 @@ void PhaserInit(void)
 	_lfoInc = _2PI * swrate / SAMPLERATE;
 }
 /*---------------------------------------------------------------------*/
+void Phaser_reset(uint8_t val)
+{
+  if (val == MIDI_MAXi){
+  PhaserInit();
+  }
+}
+/*---------------------------------------------------------------------*/
 void Phaser_Rate_set(uint8_t val)
 {
 	swrate = (MAX_RATE - MIN_RATE) / MIDI_MAX * val + MIN_RATE;

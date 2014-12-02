@@ -17,8 +17,8 @@
 
 /*--------------------- Global Defines ------------------------ */
 
-#define MAX_SCALE_INDEX		14	/* starting at 0 ! */
-#define FIRST_NOTE			21  /* MIDI number */
+#define MAX_SCALE_INDEX		16	/* starting at 0 ! */
+#define FIRST_NOTE		21      /* MIDI number */
 #define MAX_NOTE_INDEX		106	/* starting at 0 ! */
 
 
@@ -38,7 +38,8 @@ extern const uint8_t MIDIscale11[];
 extern const uint8_t MIDIscale12[];
 extern const uint8_t MIDIscale13[];
 extern const uint8_t MIDIscale14[];
-
+extern const uint8_t MIDIscale15[];
+extern const uint8_t MIDIscale16[];
 /*---------------------------------------------------------------------------*/
 
 #endif

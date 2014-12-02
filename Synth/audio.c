@@ -29,6 +29,7 @@
 
 uint16_t 			audiobuff[BUFF_LEN]; // THE audio buffer
 static uint8_t		volume = VOL;
+static uint8_t      lastvol = VOL;
 static bool			sound = true;
 
 
@@ -134,4 +135,30 @@ void Volume_set(uint8_t val)
 {
 	volume = (uint8_t)(MAXVOL/MIDI_MAX * val);
 	EVAL_AUDIO_VolumeCtl(volume);
+}
+
+// little function to handle arturia minilab rotary encoder relative mode 2 midi data
+// it's quick and dirty, should probably write a function to handle all 3 types of encoder data
+void inc_dec_volume(uint8_t val){
+  if (val <= 0x0F){
+           volume = volume + val;
+           if (volume > MAXVOL){
+     volume = MAXVOL;
+     }
+  }
+
+if (val >= 0x70){
+    val=128-val; // to get a value between 0-15
+    int minVol = volume-val; // couldn't think of a name for minvol!
+    volume=volume-val;
+
+  if (minVol < 0 || volume > 100){ // minimum volume?
+    volume = 0; // set it to the minimum volume
+    }
+  }
+
+if (lastvol != volume){ // don't keep spamming the synth engine if it's the same value
+EVAL_AUDIO_VolumeCtl(volume);
+lastvol = volume;
+}
 }

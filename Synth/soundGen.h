@@ -19,7 +19,7 @@
 #define VIBRATO_FREQ		5.5f
 #define MAX_VIBRATO_AMP		0.5f
 #define MAX_VIBRATO_FREQ	12.f
-
+#define MAX_FLT_LFO_FREQ	24.f
 /* Includes ------------------------------------------------------------------*/
 #include <math.h>
 #include <stdint.h>
@@ -48,6 +48,7 @@ void RandSound1(uint8_t val);
 void RandSound2(uint8_t val);
 
 void DemoMode_toggle(uint8_t val);
+void sequencer_toggle(uint8_t val);
 //void DemoMode_freeze(uint8_t val); // is it useful ?
 /*-------------------------------------------------------*/
 void FM_OP1_freq_set(uint8_t val);
@@ -70,16 +71,22 @@ void FM_OP4_freq_set(uint8_t val);
 void FM_OP4_freqMul_inc(uint8_t val);
 void FM_OP4_freqMul_dec(uint8_t val);
 void FM_OP4_modInd_set(uint8_t val);
-
+void lfo_phase_offset1(uint8_t val);
 /*-------------------------------------------------------*/
 void AmpLFO_amp_set(uint8_t val);
 void AmpLFO_freq_set(uint8_t val);
 
 void Filt1LFO_amp_set(uint8_t val);
 void Filt1LFO_freq_set(uint8_t val);
+void Filt1LFO_freq_incdec(uint8_t val);
 
 void Filt2LFO_amp_set(uint8_t val);
 void Filt2LFO_freq_set(uint8_t val);
+void Filt2LFO_freq_incdec(uint8_t val);
+
+void Filt3LFO_amp_set(uint8_t val);
+void Filt3LFO_freq_set(uint8_t val);
+void Filt3LFO_freq_incdec(uint8_t val);
 
 void toggleVibrato(void);
 void VibratoAmp_set(uint8_t val);
@@ -112,12 +119,15 @@ void setDecayFactor(uint8_t val);
 void nextSound(void);
 void prevSound(void);
 void Sound_set(uint8_t val);
-
+void Sound_incdec(uint8_t val);
 void soundGenInit(void);
 void soundGenNewWave(void);
 void Synth_Init(void);
 
 void make_sound(uint16_t *buf , uint16_t len);
 void OpsRandFreq(void);
+
+void newNoteArrived(char noteNumber, char velocity);
+void noteToBeKilled(char noteNumber);
 
 #endif /* __SOUNDGEN_H */

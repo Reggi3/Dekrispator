@@ -23,7 +23,8 @@
 /*-----------------------------------------------------------------------------*/
 
 #define NUMBER_STEPS 	16
-#define INIT_TEMPO 		(4*80)
+// Reggie, default was 4x80????
+#define INIT_TEMPO 		174
 
 /*------------------------------------------------------------------------------*/
 typedef struct
@@ -61,6 +62,8 @@ typedef struct
 /*--------------   Exported Functions Prototype ---------------------------*/
 
 void seq_tempo_set(uint8_t val);
+void seq_tempo_set2(uint16_t val);
+void inc_dec_tempo(uint8_t val);
 void sequencer_init(void);
 void sequencer_process(void);
 void seq_sequence_new(void);

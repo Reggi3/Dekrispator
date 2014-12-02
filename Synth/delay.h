@@ -28,6 +28,7 @@
 /* Exported functions --------------------------------------------------------*/
 
 void 	Delay_init(void);
+void    Delay_reset(uint8_t val);
 void 	Delay_clean(void);
 float	Delay_compute (float x);
 void 	Delay_feedback_inc(void);

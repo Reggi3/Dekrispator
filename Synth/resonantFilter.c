@@ -44,10 +44,14 @@ int __errno;
 
 ResonantFilter SVFilter _CCM_ ;
 ResonantFilter SVFilter2 _CCM_ ;
-
+//ResonantFilter SVFilter3 _CCM_ ;
 float filterFreq;
 float filterFreq2;
-
+//float filterFreq3;
+float lastfFreq1 = 3000;
+float lastfFreq2 = 3000;
+float lastfFreq3 = 3000;
+const uint8_t multiplier = 2;
 /****************************************************************************************************************/
 
 
@@ -114,6 +118,7 @@ void SVF_init(void)
 {
 	SVF_initialize(&SVFilter);
 	SVF_initialize(&SVFilter2);
+//	SVF_initialize(&SVFilter3);
 }
 
 //------------------------------------------------------------------------------------
@@ -122,6 +127,92 @@ void 	Filter1Freq_set(uint8_t val)
 	filterFreq = Lin2Exp(val, MIN_FREQ, MAX_FREQ) / Fs ;
 	SVF_directSetFilterValue(&SVFilter, filterFreq);
 }
+//------------------------------------------------------------------------------------
+// Reggie Added, function to allow user to sweep through the filter using a rotary encoder
+// responds to 0-15 for increment, 112-127 for decrement, my encoders have acelleration
+// so the faster you turn, the bigger number you get, with a filter Frequency Range of
+// 80hz to 8000hz, that will make it easier to dial in a particular frequency
+// for any functions such as these where there is a big number or high resolution it may
+// be desirable to code in our own resolution function, so 1x, 2x, 4x incoming values if you
+// don't need so much precision
+void 	Filter1Freq_incdec(uint8_t val)
+{
+    if (val <= 0x0F){ // less than 15,inc
+    if (lastfFreq1 + (val * multiplier) < MAX_FREQ){ // check we're not going out of range of the filter
+        val = val * multiplier;
+        lastfFreq1 = lastfFreq1 + val;
+	filterFreq = lastfFreq1 / Fs;
+        }
+        else {
+          filterFreq = MAX_FREQ / Fs; // do we need to do the maths on this?
+        }
+        } else {
+        if (lastfFreq1 - (val * multiplier) > MIN_FREQ){
+        val &= 0x0F; // to get a value between 0-15
+        val = (0x10 - val) * multiplier; // flip our value
+        lastfFreq1 = lastfFreq1 - val;
+       	filterFreq = lastfFreq1 / Fs;
+        } else {
+        filterFreq = MIN_FREQ /Fs;
+        }
+
+        }
+
+	SVF_directSetFilterValue(&SVFilter, filterFreq);
+}
+
+void 	Filter2Freq_incdec(uint8_t val)
+{
+    if (val <= 0x0F){ // less than 16,inc
+    if (lastfFreq2 + (val * multiplier) < MAX_FREQ){ // check we're not going out of range of the filter
+        val = val * multiplier;
+        lastfFreq2 = lastfFreq2 + val;
+	filterFreq2 = lastfFreq2 / Fs;
+        }
+        else {
+          filterFreq2 = MAX_FREQ /Fs; // do we need to do the maths on this?
+        }
+        } else {
+        if (lastfFreq2 - (val*multiplier) > MIN_FREQ){
+        val &= 0x0F; // to get a value between 0-15
+        val = (0x10 - val) * multiplier; // flip our value
+        lastfFreq2 = lastfFreq2 - val;
+       	filterFreq2 = lastfFreq2 / Fs;
+        } else {
+        filterFreq2 = MIN_FREQ / Fs;
+        }
+
+        }
+
+	SVF_directSetFilterValue(&SVFilter2, filterFreq2);
+}
+/*
+void 	Filter3Freq_incdec(uint8_t val)
+{
+    if (val <= 0x0F){ // less than 16,inc
+    if (lastfFreq3 + (val * multiplier) < MAX_FREQ){ // check we're not going out of range of the filter
+        val = val * multiplier;
+        lastfFreq3 = lastfFreq3 + val;
+	filterFreq3 = lastfFreq3 / Fs;
+        }
+        else {
+          filterFreq3 = MAX_FREQ /Fs; // do we need to do the maths on this?
+        }
+        } else {
+        if (lastfFreq3 - (val*multiplier) > MIN_FREQ){
+        val &= 0x0F; // to get a value between 0-15
+        val = (0x10 - val) * multiplier; // flip our value
+        lastfFreq3 = lastfFreq3 - val;
+       	filterFreq3 = lastfFreq3 / Fs;
+        } else {
+        filterFreq3 = MIN_FREQ / Fs;
+        }
+
+        }
+
+	SVF_directSetFilterValue(&SVFilter3, filterFreq3);
+}
+*/
 //------------------------------------------------------------------------------------
 void 	Filter1Res_set(uint8_t val)
 {
@@ -160,6 +251,29 @@ void 	Filter2Type_set(uint8_t val)
 	SVFilter2.type = (uint8_t)lrintf(FILTER_TYPES * val / MIDI_MAX);
 }
 
+//------------------------------------------------------------------------------------
+/*
+void 	Filter3Freq_set(uint8_t val)
+{
+	filterFreq3 = Lin2Exp(val, MIN_FREQ, MAX_FREQ) / Fs ;
+	SVF_directSetFilterValue(&SVFilter3, filterFreq3);
+}
+//------------------------------------------------------------------------------------
+void 	Filter3Res_set(uint8_t val)
+{
+	SVF_setReso(&SVFilter3, val / MIDI_MAX);
+}
+//------------------------------------------------------------------------------------
+void	Filter3Drive_set(uint8_t val)
+{
+	SVF_setDrive(&SVFilter3, val);
+}
+//------------------------------------------------------------------------------------
+void 	Filter3Type_set(uint8_t val)
+{
+	SVFilter3.type = (uint8_t)lrintf(FILTER_TYPES * val / MIDI_MAX);
+}
+*/
 //------------------------------------------------------------------------------------
 
 float SVF_calcSample(ResonantFilter* filter, float in)

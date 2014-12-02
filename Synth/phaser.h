@@ -34,6 +34,7 @@
 
 /* Exported functions ------------------------------------------------------- */
 void PhaserInit(void);
+void Phaser_reset(uint8_t val);
 void Phaser_Rate_set(uint8_t val);
 void Phaser_Feedback_set(uint8_t val);
 void Phaser_Wet_set(uint8_t val);

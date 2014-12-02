@@ -178,3 +178,15 @@ const uint8_t MIDIscale14[] =
 	2, // number of notes in this scale
 	0,2
 };
+
+const uint8_t MIDIscale15[] =
+{
+	16, // number of notes in this sequence, 16 means it won't be randomised
+	0,3,5,6,0,3,5,6,0,3,5,6,6,5,3,0
+};
+
+const uint8_t MIDIscale16[] =
+{
+	16, // number of notes in this sequence, 16 means it won't be randomised
+	0,3,5,6,6,3,1,0,0,3,5,6,6,3,1,0
+};

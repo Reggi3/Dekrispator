@@ -45,6 +45,13 @@ void Delay_init(void)
 	readpos = delayline;
 	writepos = delayline + DELAY;
 }
+
+/*-------------------------------------------------------------------------------------------*/
+void Delay_reset(uint8_t val){
+ if (val == MIDI_MAXi){
+    Delay_init;
+ }
+}
 /*-------------------------------------------------------------------------------------------*/
 void Delay_clean(void)
 {

@@ -52,27 +52,33 @@ extern VCO_bleptri_t		mbTriOsc;
 extern Oscillator_t 		vibr_lfo _CCM_;
 extern Oscillator_t 		filt_lfo _CCM_;
 extern Oscillator_t 		filt2_lfo _CCM_;
+//extern Oscillator_t 		filt3_lfo _CCM_;
 extern Oscillator_t 		amp_lfo _CCM_;
 
 extern ResonantFilter 	SVFilter;
 extern ResonantFilter 	SVFilter2;
-extern float			filterFreq  ;
-extern float			filterFreq2  ;
+extern ResonantFilter 	SVFilter3;
 
+extern float			filterFreq;
+extern float			filterFreq2;
+extern float			filterFreq3;
 extern ADSR_t 			adsr;
 
 //extern EightSegGenerator 	pitchGen _CCM_ ;
 
+//hardcoded now for simplicity, needs to be dealt with according to the other switches here.
+static bool        sequencerON _CCM_;
+
 static bool 		autoFilterON _CCM_;
-static bool			delayON _CCM_;
-static bool			phaserON _CCM_;
+static bool		delayON _CCM_;
+static bool		phaserON _CCM_;
 static bool 		chorusON _CCM_;
 static int8_t		autoSound _CCM_;
 
-static float			f0 _CCM_ ;
-static float 			vol  _CCM_;
-static float			env  _CCM_;
-static enum timbre 		sound _CCM_;
+static float		f0 _CCM_ ;
+static float 		vol  _CCM_;
+static float		env  _CCM_;
+static enum timbre	sound _CCM_;
 
 
 /*===============================================================================================================*/
@@ -128,7 +134,15 @@ void DemoMode_toggle(uint8_t val)
 //		freeze = !freeze;
 //	}
 //}
+ /*-------------------------------------------------------*/
+void sequencer_toggle(uint8_t val)
+{
+	if (val == MIDI_MAX)
+	{
+		sequencerON = !sequencerON;
+	}
 
+}
 /*-------------------------------------------------------*/
 void AmpLFO_amp_set(uint8_t val)
 {
@@ -150,6 +164,26 @@ void Filt1LFO_freq_set(uint8_t val)
 	filt_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
 /*-------------------------------------------------------*/
+void Filt1LFO_freq_incdec(uint8_t val)
+{
+  if (val <= 0x0F){
+    if (filt_lfo.freq + (0.1f *val) <= MAX_FLT_LFO_FREQ){
+	filt_lfo.freq += 0.1f;
+	   } else {
+             filt_lfo.freq = MAX_FLT_LFO_FREQ;
+           }
+	 } else if (val >= 0x70){
+           val &= 0x0F; // to get a value between 0-15
+           val = (0x10 - val); // flip our value
+           if (filt_lfo.freq - (0.1f *val) >= 0){
+               filt_lfo.freq -= 0.1f;
+         } else {
+          filt_lfo.freq=0;
+         }
+         }
+
+}
+/*-------------------------------------------------------*/
 void Filt2LFO_amp_set(uint8_t val)
 {
 	filt2_lfo.amp = MAX_FILTER_LFO_AMP / MIDI_MAX * val;
@@ -159,7 +193,62 @@ void Filt2LFO_freq_set(uint8_t val)
 {
 	filt2_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
+/*-------------------------------------------------------*/
 
+void Filt2LFO_freq_incdec(uint8_t val)
+{
+  // if we want finer control of the lfo freq to be able to hit divisions of bars, 2 bars etc.
+  // then we'll need to reduce the 0.1f value
+  if (val <= 0x0F){
+    if (filt2_lfo.freq + (0.1f *val) <= MAX_FLT_LFO_FREQ){
+	filt2_lfo.freq += 0.1f*val;
+	   } else {
+             filt2_lfo.freq = MAX_FLT_LFO_FREQ;
+           }
+	 } else if (val >= 0x70){
+           val &= 0x0F; // to get a value between 0-15
+           val = (0x10 - val); // flip our value
+           if (filt2_lfo.freq - (0.1f * val) >= 0){
+               filt2_lfo.freq -= 0.1f * val;
+         } else {
+          filt2_lfo.freq = 0;
+         }
+         }
+
+}
+
+/*
+void Filt3LFO_amp_set(uint8_t val)
+{
+	filt3_lfo.amp = MAX_FILTER_LFO_AMP / MIDI_MAX * val;
+}
+
+void Filt3LFO_freq_set(uint8_t val)
+{
+	filt3_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
+}
+
+void Filt3LFO_freq_incdec(uint8_t val)
+{
+  // if we want finer control of the lfo freq to be able to hit divisions of bars, 2 bars etc.
+  // then we'll need to reduce the 0.1f value
+  if (val <= 0x0F){
+    if (filt3_lfo.freq + (0.1f *val) <= MAX_FLT_LFO_FREQ){
+	filt3_lfo.freq += 0.1f*val;
+	   } else {
+             filt3_lfo.freq = MAX_FLT_LFO_FREQ;
+           }
+	 } else if (val >= 0x70){
+           val &= 0x0F; // to get a value between 0-15
+           val = (0x10 - val); // flip our value
+           if (filt3_lfo.freq - (0.1f * val) >= 0){
+               filt3_lfo.freq -= 0.1f * val;
+         } else {
+          filt3_lfo.freq = 0;
+         }
+         }
+}
+*/
 /*-------------------------------------------------------*/
 void toggleVibrato(void)
 {
@@ -331,6 +420,22 @@ void Sound_set(uint8_t val)
 	sound = (uint8_t) rintf((LAST_SOUND - 1) / MIDI_MAX * val);
 	if (sound != ADDITIVE) AdditiveGen_newWaveform();
 }
+
+// Reggie added, small increment/decrement function to change the sound
+// doesn't need to worry about acceleration as it's only 16? values
+void Sound_incdec(uint8_t val){
+  if (val <= 0x0F){
+    if (sound < LAST_SOUND )
+    sound++;
+    } else if (val >= 0x70){
+           if ( sound > 0){
+             sound--;
+             }
+    }
+  if (sound != ADDITIVE) AdditiveGen_newWaveform();
+}
+
+
 /*******************************************************************************************************************************/
 
 void FM_OP1_freq_set(uint8_t val)
@@ -428,7 +533,9 @@ void FM_OP4_freqMul_dec(uint8_t val)
 	}
 }
 
-
+void lfo_phase_offset1(uint8_t val){
+   lfo_phase_offset(&filt_lfo,val);
+}
 /*===============================================================================================================*/
 
 void
@@ -441,6 +548,7 @@ Synth_Init(void)
 	chorusON = false;
 	delayON = false;
 	phaserON = false;
+    sequencerON = false;
 
 	Delay_init();
 	drifter_init();
@@ -452,14 +560,15 @@ Synth_Init(void)
 	SVF_init();
 	filterFreq = 0.25f;
 	filterFreq2 = 0.25f;
-	osc_init(&op1, 0.8f, 587.f);
-	osc_init(&op2, 0.8f, 587.f);
-	osc_init(&op3, 0.8f, 587.f);
-	osc_init(&op4, 0.8f, 587.f);
-	osc_init(&vibr_lfo, 0, VIBRATO_FREQ);
-	osc_init(&filt_lfo, 0, 0);
-	osc_init(&filt2_lfo, 0, 0);
-	osc_init(&amp_lfo, 0, 0);
+	osc_init(&op1, 0.8f, 587.f, false);
+	osc_init(&op2, 0.8f, 587.f, false);
+	osc_init(&op3, 0.8f, 587.f, false);
+	osc_init(&op4, 0.8f, 587.f, false);
+	osc_init(&vibr_lfo, 0, VIBRATO_FREQ, false);
+	osc_init(&filt_lfo, 0, 0, true);
+	osc_init(&filt2_lfo, 0, 0, true);
+//	osc_init(&filt3_lfo, 0, 0, true);
+	osc_init(&amp_lfo, 0, 0, false);
 	AdditiveGen_newWaveform();
 	VCO_blepsaw_Init(&mbSawOsc);
 	VCO_bleprect_Init(&mbRectOsc);
@@ -471,15 +580,22 @@ void sequencer_newStep_action(void) // User callback function called by sequence
 {
 	if ((noteG.automaticON || noteG.chRequested))
 	{
-		seq_sequence_new();
+		seq_sequence_new(); // This is where the sequence gets loaded in, only called once
+		                    // At first run and then any time the user changes pattern
 		noteG.chRequested = false;
 		AdditiveGen_newWaveform();
 	}
-
+        // should add a velocity check, that way some notes could be muted in the patterns?
+        // || seq.track1.veloc[seq.step_idx] == 0 or check for a seq.track1.note value >11 
+        // (notes indexed from 0-11) the latter would mean not implementing velocity
 	if ( (noteG.someNotesMuted) && (rintf(frand_a_b(0.4f , 1)) == 0) )
 		ADSR_keyOff(&adsr);
-	else
+	else    {
 		ADSR_keyOn(&adsr);
+               osc_phase_reset(&filt_lfo);
+               osc_phase_reset(&filt2_lfo);
+//               osc_phase_reset(&filt3_lfo);
+                }
 
 	if (autoFilterON)
 		SVF_directSetFilterValue(&SVFilter, Ts * 600.f * powf(5000.f / 600.f, frand_a_b(0 , 1)));
@@ -560,6 +676,25 @@ void sequencer_newSequence_action(void) // User callback function called by sequ
 	}
 }
 /*===============================================================================================================*/
+static char currentNote = 0;
+
+void newNoteArrived(char noteNumber, char velocity){  //called by note on's, at midi_interface.c
+  currentNote = noteNumber;
+  // calculate the frequency
+  f0 = notesFreq[noteNumber-21];
+  if (ADSR_getState(&adsr)==RELEASE || ADSR_getState(&adsr)==DONE )
+    ADSR_keyOn(&adsr); //this sets the state to attack, directly
+    //otherwise we just change the frequency, allowing legato to be played
+    osc_phase_reset(&filt_lfo);
+    osc_phase_reset(&filt2_lfo);
+//    osc_phase_reset(&filt3_lfo);
+
+}
+void noteToBeKilled(char noteNumber){ //called by note off's, at midi_interface.c
+    if(noteNumber == currentNote)
+     ADSR_keyOff(&adsr);
+    //otherwise do nothing, because the player is doing legato
+}
 
 void make_sound(uint16_t *buf , uint16_t length) // To be used with the Sequencer
 {
@@ -576,7 +711,10 @@ void make_sound(uint16_t *buf , uint16_t length) // To be used with the Sequence
 	for (pos = 0; pos < length; pos++)
 	{
 		/*--- Sequencer actions and update ---*/
-		sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
+		
+	        if (sequencerON) sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
+                //else monophonicKeyInterface(); //computes f0 and starts/stops the ADSR, based on keyboard input
+                //probably not needed, just call stuff from the midi events.
 
 		/*--- compute vibrato modulation ---*/
 		f1 = f0 * (1 +  Osc_WT_SINE_SampleCompute(&vibr_lfo));
@@ -587,14 +725,19 @@ void make_sound(uint16_t *buf , uint16_t length) // To be used with the Sequence
 		/*--- Apply envelop and tremolo ---*/
 		env = ADSR_computeSample(&adsr) * (1 + Osc_WT_SINE_SampleCompute(&amp_lfo));
 		y *= vol * env; // apply volume and envelop
-		if (adsr.cnt_ >= seq.gateTime) ADSR_keyOff(&adsr);
+		if (adsr.cnt_ >= seq.gateTime) if (sequencerON) ADSR_keyOff(&adsr);
 
 		/*--- Apply filter effect ---*/
 		/* Update the filters cutoff frequencies */
-		if ((! autoFilterON)&&(filt_lfo.amp != 0))
-			SVF_directSetFilterValue(&SVFilter, filterFreq * (1 + OpSampleCompute7bis(&filt_lfo)));
-		if (filt2_lfo.amp != 0)
-			SVF_directSetFilterValue(&SVFilter2, filterFreq2 * (1 + OpSampleCompute7bis(&filt2_lfo)));
+		if ((! autoFilterON)&&(filt_lfo.amp != 0)){
+                  SVF_directSetFilterValue(&SVFilter, filterFreq * (1 + OpSampleCompute7bis(&filt_lfo)));
+                  }
+
+
+		if ((! autoFilterON)&&(filt2_lfo.amp != 0)){
+                  SVF_directSetFilterValue(&SVFilter2, filterFreq2 * (1 + OpSampleCompute7bis(&filt2_lfo)));
+                  }
+
 		y = 0.5f * (SVF_calcSample(&SVFilter, y) + SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
 
 		/*---  Apply delay effect ----*/
@@ -606,7 +749,12 @@ void make_sound(uint16_t *buf , uint16_t length) // To be used with the Sequence
 		/*--- Apply chorus/flanger effect ---*/
 		if (chorusON) stereoChorus_compute (&yL, &yR, y) ;
 		else yL = yR = y;
-
+/*
+ 		if ((filt3_lfo.amp != 0)){
+                  SVF_directSetFilterValue(&SVFilter3, filterFreq3 * (1 + OpSampleCompute7bis(&filt3_lfo)));
+                  }
+		y = 0.5f * (SVF_calcSample(&SVFilter3, y));
+*/
 		/*--- clipping ---*/
 		yL = (yL > 1.0f) ? 1.0f : yL; //clip too loud left samples
 		yL = (yL < -1.0f) ? -1.0f : yL;

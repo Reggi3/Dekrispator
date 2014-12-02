@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
  * File Name          : audio.h
- * Author				: Xavier Halgand
+ * Author	      : Xavier Halgand
  * Date               :
  * Description        :
  ******************************************************************************
@@ -27,7 +27,7 @@ void toggleSound(void);
 void incVol(void);
 void decVol(void);
 void Volume_set(uint8_t val);
-
+void inc_dec_volume(uint8_t val);
 
 
 #endif /* __AUDIO_H */

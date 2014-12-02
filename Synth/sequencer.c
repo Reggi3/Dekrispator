@@ -81,8 +81,12 @@ void seq_chooseScale(uint8_t idx)
 	case 11 : 	currentScale = (uint8_t*)MIDIscale06;	break;
 	case 12 : 	currentScale = (uint8_t*)MIDIscale05;	break;
 	case 13 : 	currentScale = (uint8_t*)MIDIscale12;	break;
-	case 14 : 	currentScale = (uint8_t*)MIDIscale11;	break;
-	default :	currentScale = (uint8_t*)MIDIscale11; break ;
+	case 14 : 	currentScale = (uint8_t*)MIDIscale16;	break;
+	case 15 : 	currentScale = (uint8_t*)MIDIscale15;	break;
+	default :	currentScale = (uint8_t*)MIDIscale15;   break;
+	}
+	if (idx >=14){ // Check to see if we're into the user patterns section
+          seq.step_idx = 0; // reset the pattern step to zero
 	}
 	noteG.currentScale = currentScale;
 	noteG.chRequested = true;
@@ -125,6 +129,7 @@ void seq_switchMovingSeq(uint8_t val)
 	else
 		noteG.automaticON= false;
 }
+
 /*-------------------------------------------------------*/
 void seq_toggleGlide(void)
 {
@@ -216,25 +221,83 @@ void seq_tempo_set(uint8_t val)
 	seq.steptime = lrintf(Fs * 60 / seq.tempo);
 	//seq.smp_count = seq.steptime;
 }
+void seq_tempo_set2(uint16_t val)
+{
+         seq.tempo = (float)val;
+         seq.steptime = lrintf(Fs * 60 / seq.tempo);
+}
+
+// inc/dec function to deal with velocity sensitive rotary encoders on arturia minilab
+// encoder is set to mode #relative2, left turn dec gives values (slowest turn) 7F - (fastest turn speed) 71 hex
+// Right turn (inc) gives values 1-0F (slowest/fastest)
+// could probably look to see if it's a relative type 1 in here too (3f/41)
+// if val > 0x40, val = val - 0x40
+// if val < 0x40, val &= 0x0F, val = 16 - val;
+void inc_dec_tempo(uint8_t val){
+  if (val <0x0F){ // less than 15,inc
+    seq.tempo = seq.tempo+val;
+  }
+  else{
+  if (seq.tempo-val >= 20){ // minimum tempo? should set to something, don't know what tempo settings really are yet
+
+    val &=0x0F; // to get a value between 0-15
+    val = 0x10 - val; // flip our value
+    seq.tempo = seq.tempo - val;
+  } else {
+   seq.tempo = 20; // set it to the minimum tempo
+
+  }
+  }
+         seq.steptime = lrintf(Fs * 60 / seq.tempo);
+}
+
 /*--------------------------------------------------------------------------------------------*/
+// needed to figure this bit out, this is called when the sequencer first starts up and when
+// the user changes the pattern number, the midinotetable is used to build the 16 note pattern
+// that will be played.  This is also the randomiser part of sequencer
+// added flat sequence support, need to add 'rest' (blank step) support
+// use a midinotetable note value higher than 12? as a blank step?
 void seq_sequence_new(void)
 {
-	int16_t relativeNote;
-	int16_t octaveShift;
-	int16_t index;
+	int16_t relativeNote; // the random note in our scale
+	int16_t octaveShift;  // how many octaves our highest note can go from rootnote
+	int16_t index; // the actual note that will be played in the end
 
 	for (uint8_t i = 0; i <= NUMBER_STEPS; i++)
 	{
-		relativeNote = noteG.currentScale[lrintf(frand_a_b(1 , noteG.currentScale[0]))];
-		octaveShift = 12 * lrintf(frand_a_b(0 , noteG.octaveSpread));
-		index = noteG.rootNote + octaveShift + relativeNote - FIRST_NOTE;
+          // Reggie added, facility to add your own 16 note (4 bar) sequences
+          // the sequencer was working on scales, useful as there aren't any
+          // 16 note scales, so we can use the number of notes in a scale
+          // to determine whether it's a random arpeggiated sequence or
+          // a flat sequence with octave shifting
+          // the random octave shifting can turned by setting the sequencer maxfreq to zero
 
+          if (noteG.currentScale[0] == NUMBER_STEPS){
+          		relativeNote = noteG.currentScale[i+1];
+          } else{
+            // load a random note from our scale into relativeNote
+            relativeNote = noteG.currentScale[lrintf(frand_a_b(1 , noteG.currentScale[0]))];
+          }
+
+ 		// pick an octave, any octave
+		octaveShift = 12 * lrintf(frand_a_b(0 , noteG.octaveSpread));
+		// now piece it all together to decide which note we'll actually play in this step
+                // FIRST_NOTE is the lowest note that the synth will play at all, so it's our zero offset
+                // for everything, our rootnote is the lowest note that will be played in the sequence
+                // octaveShift and relativeNote are covered in the above comments
+		index = noteG.rootNote + octaveShift + relativeNote - FIRST_NOTE;
+                // I think this is supposed to keep the notes in range
+                // should probably attempt to work out how many octaves we can actually go to
+                // as this looks like it will just reduce/increase out of range notes until
+                // they in range, which somewhat takes the randomness out of it
 		while (index > MAX_NOTE_INDEX) index -= 12;
 		while (index < 0) index += 12;
 		seq.track1.note[i] = index; // note frequency is in notesFreq[index]
 	}
 }
+
 /*--------------------------------------------------------------------------------------------*/
+
 void seq_transpose(void)
 {
 	int16_t  noteIndex;
@@ -265,7 +328,7 @@ void sequencer_init(void)
 	noteG.scaleIndex = 0;
 	noteG.octaveSpread = 4;
 	noteG.rootNote = 36;
-	noteG.currentScale = (uint8_t*)MIDIscale13;
+	noteG.currentScale = (uint8_t*)MIDIscale15;
 
 	seq_sequence_new();
 }

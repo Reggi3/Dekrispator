@@ -37,6 +37,8 @@ typedef struct
 	float_t		last_amp;
 	float_t 	freq;	// Hertz
 	float_t 	phase;	// radians
+	float_t     offset; // phase offset, radians
+	bool        retrigger; // whether the oscillator should be retriggered (for filter lfo)
 	float_t		phi0;	// radians
 	float_t		modInd;	// Modulation Index for FM
 	float_t		mul;	// pitch frequency multiplier
@@ -76,7 +78,12 @@ float_t FM2_sampleCompute(float frq); // (op2 -> op1) + (op4 -> op3) => sound
 void 	FM_op_freq_set(Oscillator_t *op, uint8_t val);
 void 	FM_op_modInd_set(Oscillator_t *op, uint8_t val);
 /*-------------------------------------------------------*/
-void 	osc_init(Oscillator_t * op, float_t amp, float_t freq);
+void 	osc_init(Oscillator_t * op, float_t amp, float_t freq, bool trigger);
+// Reggie Added, reset the phase so we can regtrigger the filter lfo with each note
+void    osc_phase_reset(Oscillator_t * op);
+void    lfo_phase_shift(Oscillator_t * op, uint8_t val);
+void    lfo_phase_offset(Oscillator_t * op, uint8_t val);
+
 /*-------------------------------------------------------*/
 void 	OpSetFreq(Oscillator_t * op, float_t f);
 /*-------------------------------------------------------*/
